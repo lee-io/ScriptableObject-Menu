@@ -4,7 +4,7 @@ Create ScriptableObject script and asset file instances from the Unity Editor.
 ### Installation
 
 - The Menu Bar / Window / Package Manager / Add package from git URL `https://github.com/lee-io/ScriptableObject-Menu.git`
-- Alternatively, download and copy `ScriptableObject-Menu` to your Assets folder.
+- Alternatively, download and copy the `ScriptableObject-Menu` folder to your Assets folder.
 
 ### Usage
 
