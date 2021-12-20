@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -6,12 +7,17 @@ namespace ScriptableObjectMenu
 {
 	internal sealed class AssetMenu : BaseMenu
 	{
+		private static readonly HashSet<string> m_ExcludeAssemblies = new HashSet<string>
+		{
+			"Unity", "UnityEngine", "UnityEditor", "System", "Mono"
+		};
+
 		private static GenericMenu m_AssetPopupMenu;
 
 		[MenuItem(EDITOR_ASSET_MENU_PATH + "Asset", true, EDITOR_ASSET_MENU_PRIORITY)]
 		internal static bool Validate ()
 		{
-			// Disabled during domain reload
+			// Disable during domain reload
 			return !EditorApplication.isCompiling;
 		}
 
@@ -23,31 +29,21 @@ namespace ScriptableObjectMenu
 			{
 				m_AssetPopupMenu = new GenericMenu();
 
-				// Traverse domain assemblies
+				// Traverse assemblies
 				foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
 				{
-					// Traverse assembly types
-					foreach (var type in asm.GetTypes())
-					{
-						// Filter by type
-						if (!type.IsValueType &&
-							!type.IsInterface &&
-							!type.IsAbstract)
-						{
-							// Filter by namespace
-							if (type.Namespace != null)
-							{
-								var space = type.Namespace.Split('.')[0];
-								if (space == "UnityEngine" ||
-									space == "UnityEditor" ||
-									space == "UnityEditorInternal")
-								{
-									continue;
-								}
-							}
+					// Filter by assembly
+					var root = asm.GetName().Name.Split('.')[0];
 
-							// Filter by class
-							if (IsScriptableObject(type))
+					if (!m_ExcludeAssemblies.Contains(root))
+					{
+						// Traverse types
+						foreach (var type in asm.GetTypes())
+						{
+							// Filter by type
+							if (type.IsClass &&
+							   !type.IsAbstract &&
+							   IsScriptableObject(type))
 							{
 								// Convert namespace to path
 								var path = type.FullName.Replace('.', '/');
@@ -81,15 +77,15 @@ namespace ScriptableObjectMenu
 
 		private static void CreateAsset (Type type)
 		{
-			// Create asset instance
-			var asset = CreateInstance(type);
+			// Display save dialog
+			var path = EditorUtility.SaveFilePanelInProject("Save Asset", type.Name, "asset", string.Empty, TryGetProjectPath());
 
-			if (asset != null)
+			if (!string.IsNullOrEmpty(path))
 			{
-				// Display save dialog
-				var path = EditorUtility.SaveFilePanelInProject("Save Asset", type.Name, "asset", string.Empty);
+				// Create asset instance
+				var asset = CreateInstance(type);
 
-				if (path.Length > 0)
+				if (asset != null)
 				{
 					// Save asset to file
 					AssetDatabase.CreateAsset(asset, path);
@@ -100,11 +96,11 @@ namespace ScriptableObjectMenu
 					// Log on complete
 					Debug.Log($"Asset created at \"{path}\"");
 				}
-			}
-			else
-			{
-				// Alert on type error
-				EditorUtility.DisplayDialog("Error", $"Invalid Asset\n\n\"{type.Name}\"", "OK");
+				else
+				{
+					// Alert on type error
+					EditorUtility.DisplayDialog("Error", $"Invalid Asset\n\n\"{type.Name}\"", "OK");
+				}
 			}
 		}
 
@@ -120,6 +116,7 @@ namespace ScriptableObjectMenu
 			{
 				if (type == typeof(ScriptableObject))
 				{
+					// Return match
 					return true;
 				}
 				else

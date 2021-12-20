@@ -19,19 +19,22 @@ namespace ScriptableObjectMenu
 		// The default name for new Scripts
 		private const string DEFAULT_CLASS_NAME = "NewScriptableObject";
 
+		// The regex pattern for identifiers
+		private const string IDENTIFIER_PATTERN = "^[A-Z_][\\w]*$";
+
 		[MenuItem(EDITOR_ASSET_MENU_PATH + "Script", false, EDITOR_ASSET_MENU_PRIORITY + 1)]
 		internal static void Initiate ()
 		{
 			// Display save dialog
-			var path = EditorUtility.SaveFilePanelInProject("Save Script", DEFAULT_CLASS_NAME, "cs", string.Empty);
+			var path = EditorUtility.SaveFilePanelInProject("Save Script", DEFAULT_CLASS_NAME, "cs", string.Empty, TryGetProjectPath());
 
-			if (path.Length > 0)
+			if (!string.IsNullOrEmpty(path))
 			{
 				// Get name from path
 				var name = Path.GetFileNameWithoutExtension(path);
 
 				// Validate class name
-				if (Regex.IsMatch(name, "^[A-Z_][A-Za-z0-9_]*$"))
+				if (Regex.IsMatch(name, IDENTIFIER_PATTERN))
 				{
 					// Find template guid
 					var guid = AssetDatabase.FindAssets(TEMPLATE_FILE_PATH + " t:TextAsset");
@@ -50,10 +53,10 @@ namespace ScriptableObjectMenu
 							// Get qualified name
 							var qasm = Assembly.CreateQualifiedName(easm, name);
 
-							// Get type definition
+							// Get type
 							var type = Type.GetType(qasm, false, true);
 
-							// Prevent definition conflict
+							// Prevent type conflict
 							if (type == null)
 							{
 								// Copy template
@@ -81,7 +84,7 @@ namespace ScriptableObjectMenu
 							}
 							else
 							{
-								// Alert on conflicting type definition error
+								// Alert on conflicting type error
 								if (EditorUtility.DisplayDialog("Error", $"Class Name Already Exists\n\n\"{name}\"", "OK"))
 								{
 									// And recall

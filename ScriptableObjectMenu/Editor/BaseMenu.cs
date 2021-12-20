@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using UnityEditor;
+using UnityEngine;
 
 namespace ScriptableObjectMenu
 {
@@ -14,13 +16,38 @@ namespace ScriptableObjectMenu
 		protected static void UpdateAssetDatabase (Type type, string path)
 		{
 			// Update database
-			var options = ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport;
-			AssetDatabase.ImportAsset(path, options);
+			AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
 
 			// Focus asset
 			var asset = AssetDatabase.LoadAssetAtPath(path, type);
 			ProjectWindowUtil.ShowCreatedAsset(asset);
 			EditorGUIUtility.PingObject(asset);
+		}
+
+		protected static string TryGetProjectPath ()
+		{
+			var obj = Selection.activeObject;
+
+			if (obj != null)
+			{
+				var path = AssetDatabase.GetAssetPath(obj.GetInstanceID());
+
+				if (!string.IsNullOrEmpty(path))
+				{
+					var attributes = File.GetAttributes(path);
+
+					if ((attributes & FileAttributes.Directory) != FileAttributes.Directory)
+					{
+						return Path.GetDirectoryName(path);
+					}
+					else
+					{
+						return path;
+					}
+				}
+			}
+
+			return Application.dataPath;
 		}
 	}
 }
