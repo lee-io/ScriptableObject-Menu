@@ -1,0 +1,50 @@
+using UnityEngine;
+
+public class %IDENTIFIER_TAG% : ScriptableObject
+{
+	/// <summary>
+	/// Called by Unity when the script is started.
+	/// </summary>
+	void Awake ()
+	{
+	}
+
+	/// <summary>
+	/// Called by Unity when the script is loaded.
+	/// </summary>
+	void OnEnable ()
+	{
+	}
+
+	/// <summary>
+	/// Called by Unity when the script goes out of scope.
+	/// </summary>
+	void OnDisable ()
+	{
+	}
+
+	/// <summary>
+	/// Called by Unity when the script will be destroyed.
+	/// </summary>
+	void OnDestroy ()
+	{
+	}
+
+#if UNITY_EDITOR
+
+	/// <summary>
+	/// Editor-only function called by Unity when the user hits the reset button in the Inspector or when the script is loaded for the first time.
+	/// </summary>
+	void Reset ()
+	{
+	}
+
+	/// <summary>
+	/// Editor-only function called by Unity when the script is loaded or a value is changed in the Inspector.
+	/// </summary>
+	void OnValidate ()
+	{
+	}
+
+#endif
+}
