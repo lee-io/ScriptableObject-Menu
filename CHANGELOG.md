@@ -1,7 +1,18 @@
 # Changelog
 All notable changes to Scriptable Object Menu will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](http://keepachangelog.com) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## [2.1.0] - 2023-04-12
+
+### Added
+- Custom Editor for the Project Settings window
+
+### Changed
+- Moved the settings file from the Assets folder to the Project Settings folder
+
+### Fixed
+- Performance regression in large projects with 'Include Selected Types' enabled
 
 ## [2.0.0] - 2023-01-29
 

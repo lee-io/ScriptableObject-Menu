@@ -47,7 +47,7 @@ namespace ScriptableObjectMenu
 		/// <summary>
 		/// The settings instance cache.
 		/// </summary>
-		protected static readonly MenuSettings m_Settings = MenuSettings.Instance;
+		protected static readonly MenuSettings m_Settings = MenuSettings.instance;
 
 		protected static T InvokeAction<T> (string path, string resource) where T : MenuActionBase
 		{

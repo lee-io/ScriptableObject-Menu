@@ -24,7 +24,7 @@ namespace ScriptableObjectMenu
 			InvokeAction<CloneAssetAction>(path, EDITOR_ASSET_ICON_RESOURCE).m_AssetPath = path;
 		}
 
-		protected override sealed void Execute (string path)
+		protected sealed override void Execute (string path)
 		{
 			if (!AssetDatabase.CopyAsset(m_AssetPath, path))
 			{

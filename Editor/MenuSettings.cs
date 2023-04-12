@@ -5,7 +5,8 @@ using Object = UnityEngine.Object;
 
 namespace ScriptableObjectMenu
 {
-	internal sealed class MenuSettings : ScriptableObject
+	[FilePath(PROJECT_SETTINGS_FILEPATH, FilePathAttribute.Location.ProjectFolder)]
+	internal sealed class MenuSettings : ScriptableSingleton<MenuSettings>
 	{
 		/// <summary>
 		/// The default name for new scripts.
@@ -21,6 +22,11 @@ namespace ScriptableObjectMenu
 		/// The default template's filename.
 		/// </summary>
 		private const string DEFAULT_TEMPLATE_FILENAME = "ScriptableObjectTemplate.cs";
+
+		/// <summary>
+		/// The path to the project settings file.
+		/// </summary>
+		private const string PROJECT_SETTINGS_FILEPATH = "ProjectSettings/ScriptableObjectMenuSettings.asset";
 
 		/// <summary>
 		/// The default assembly exclusion list.
@@ -78,33 +84,7 @@ namespace ScriptableObjectMenu
 		/// </summary>
 		public bool IsDirty { get; set; }
 
-		/// <summary>
-		/// The singleton instance.
-		/// </summary>
-		private static MenuSettings m_Instance;
-
-		/// <summary>
-		/// Lazy loads or creates the singleton instance.
-		/// </summary>
-		public static MenuSettings Instance
-		{
-			get
-			{
-				if (m_Instance == null)
-				{
-					m_Instance = TryLoadInstance<MenuSettings>();
-
-					if (m_Instance == null)
-					{
-						CreateInstance();
-					}
-				}
-
-				return m_Instance;
-			}
-		}
-
-		private static T TryLoadInstance<T> (string name = null) where T : Object
+		private static T TryLoadAsset<T> (string name = null) where T : Object
 		{
 			var guid = AssetDatabase.FindAssets($"{name} t:{typeof(T).Name}");
 
@@ -121,59 +101,26 @@ namespace ScriptableObjectMenu
 			return null;
 		}
 
-		private static void CreateInstance ()
-		{
-			m_Instance = CreateInstance<MenuSettings>();
-			var path = $"Assets/{nameof(ScriptableObjectMenu)}Settings.asset";
-			AssetDatabase.CreateAsset(m_Instance, path);
-		}
-
-		private void Reset ()
+		public void Reset ()
 		{
 			LogOnSuccess = true;
 			SortItemsByName = true;
 			GroupItemsByAssembly = true;
 			IncludeSelectedTypes = true;
-			m_ExcludeAssemblies = m_DefaultExcludeAssemblies;
+			m_ExcludeAssemblies = new(m_DefaultExcludeAssemblies);
+
 			OpenAfterCreation = true;
 			DefaultScriptName = DEFAULT_SCRIPT_NAME;
 			TemplateIdentifierTag = DEFAULT_IDENTIFIER_TAG;
-			TemplateAssetFile = TryLoadInstance<TextAsset>(DEFAULT_TEMPLATE_FILENAME);
+			TemplateAssetFile = TryLoadAsset<TextAsset>(DEFAULT_TEMPLATE_FILENAME);
 
 			OnValidate();
+			Save();
 		}
 
 		private void OnValidate ()
 		{
-			IsValid = true;
-			var message = string.Empty;
-
-			if (string.IsNullOrWhiteSpace(DefaultScriptName))
-			{
-				IsValid &= false;
-				message += $" '{nameof(DefaultScriptName)}' is empty.";
-			}
-
-			if (TemplateAssetFile == null)
-			{
-				IsValid &= false;
-				message += $" '{nameof(TemplateAssetFile)}' is null.";
-			}
-			else if (string.IsNullOrWhiteSpace(TemplateIdentifierTag))
-			{
-				IsValid &= false;
-				message += $" '{nameof(TemplateIdentifierTag)}' is empty.";
-			}
-			else if (!TemplateAssetFile.text.Contains(TemplateIdentifierTag))
-			{
-				IsValid &= false;
-				message += $" '{TemplateAssetFile.name}' does not contain tag '{TemplateIdentifierTag}'.";
-			}
-
-			if (!IsValid)
-			{
-				Debug.LogWarning($"Invalid Scriptable Object Menu settings:{message} The Menu will be disabled.");
-			}
+			Validate();
 
 			ExcludeAssemblies = new HashSet<string>(m_ExcludeAssemblies)
 			{
@@ -181,6 +128,43 @@ namespace ScriptableObjectMenu
 			};
 
 			IsDirty = true;
+		}
+
+		public bool Validate (ICollection<string> messages = null)
+		{
+			IsValid = true;
+
+			if (string.IsNullOrWhiteSpace(DefaultScriptName))
+			{
+				IsValid = false;
+				messages?.Add($"'{nameof(DefaultScriptName)}' is empty");
+			}
+
+			if (TemplateAssetFile == null)
+			{
+				IsValid = false;
+				messages?.Add($"'{nameof(TemplateAssetFile)}' is null");
+			}
+			else if (string.IsNullOrWhiteSpace(TemplateIdentifierTag))
+			{
+				IsValid = false;
+				messages?.Add($"'{nameof(TemplateIdentifierTag)}' is empty");
+			}
+			else if (!TemplateAssetFile.text.Contains(TemplateIdentifierTag))
+			{
+				IsValid = false;
+				messages?.Add($"'{TemplateAssetFile.name}' does not contain tag '{TemplateIdentifierTag}'");
+			}
+
+			return IsValid;
+		}
+
+		public void Save ()
+		{
+			if (IsValid)
+			{
+				Save(true);
+			}
 		}
 	}
 }

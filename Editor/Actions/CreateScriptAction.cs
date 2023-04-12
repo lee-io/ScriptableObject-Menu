@@ -48,7 +48,7 @@ namespace ScriptableObjectMenu
 				var utf8 = new UTF8Encoding(true);
 				File.WriteAllText(path, script, utf8);
 			}
-			catch (Exception e)
+			catch
 			{
 				// Clean up
 				if (File.Exists(path))
@@ -56,7 +56,7 @@ namespace ScriptableObjectMenu
 					File.Delete(path);
 				}
 
-				throw e;
+				throw;
 			}
 		}
 

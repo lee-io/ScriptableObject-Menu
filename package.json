@@ -1,6 +1,6 @@
 {
-	"name": "com.lio.scriptableobjectmenu",
-	"version": "2.0.0",
+	"name": "io.lee.scriptableobjectmenu",
+	"version": "2.1.0",
 	"displayName": "Scriptable Object Menu",
 	"description": "Create Scriptable Object script and asset file instances from the Unity Editor.",
 	"licensesUrl": "https://github.com/lee-io/ScriptableObject-Menu/blob/master/LICENSE",
@@ -8,6 +8,7 @@
 	"keywords": [
 		"Unity",
 		"Editor",
+		"ScriptableObject",
 		"Scriptable Object"
 	],
 	"type": "tool",

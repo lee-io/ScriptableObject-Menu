@@ -15,9 +15,9 @@ namespace ScriptableObjectMenu
 		private const HideFlags INVALID_HIDE_FLAGS = HideFlags.DontSaveInEditor | HideFlags.HideInHierarchy;
 
 		/// <summary>
-		/// The Project Window selection filter flags.
+		/// The Asset Database selection find filter.
 		/// </summary>
-		private const SelectionMode SELECTION_FLAGS = SelectionMode.ExcludePrefab | SelectionMode.DeepAssets;
+		private const string SELECTION_FIND_FILTER = "t:" + nameof(ScriptableObject) + " t:" + nameof(MonoScript);
 
 		/// <summary>
 		/// The asset menu item cache.
@@ -103,11 +103,6 @@ namespace ScriptableObjectMenu
 			// From selection
 			if (m_Settings.IncludeSelectedTypes && TryGetSelectedTypes(out var types))
 			{
-				if (m_Settings.SortItemsByName)
-				{
-					types.Sort((x, y) => CompareAlphaNumeric(x.Name, y.Name));
-				}
-
 				foreach (var type in types)
 				{
 					var item = CreateMenuItem(type, type.Name);
@@ -151,40 +146,71 @@ namespace ScriptableObjectMenu
 
 		private static bool TryGetSelectedTypes (out List<Type> types)
 		{
-			types = new List<Type>();
-
-			// Gather objects
-			if (Selection.count == 0)
-			{
-				return false;
-			}
-
-			var objects = Selection.GetFiltered<Object>(SELECTION_FLAGS);
+			var objects = Selection.objects;
 
 			if (objects.Length == 0)
 			{
+				types = null;
 				return false;
 			}
 
-			// Extract types
+			types = new List<Type>();
+
 			foreach (var obj in objects)
 			{
-				switch (obj)
-				{
-					case ScriptableObject asset:
-						TryAdd(types, asset.GetType());
-						break;
+				var path = AssetDatabase.GetAssetPath(obj);
 
-					case MonoScript script:
-						TryAdd(types, script.GetClass());
-						break;
+				if (string.IsNullOrEmpty(path))
+				{
+					continue;
+				}
+
+				if (!AssetDatabase.IsValidFolder(path))
+				{
+					TryAdd(types, obj);
+					continue;
+				}
+
+				foreach (var guid in AssetDatabase.FindAssets(SELECTION_FIND_FILTER, new[] { path }))
+				{
+					path = AssetDatabase.GUIDToAssetPath(guid);
+
+					if (!string.IsNullOrEmpty(path))
+					{
+						TryAdd(types, AssetDatabase.LoadMainAssetAtPath(path));
+					}
 				}
 			}
 
-			return types.Count > 0;
-
-			static void TryAdd (List<Type> types, Type type)
+			if (types.Count == 0)
 			{
+				return false;
+			}
+
+			if (m_Settings.SortItemsByName)
+			{
+				types.Sort((x, y) => CompareAlphaNumeric(x.Name, y.Name));
+			}
+
+			return true;
+
+			static void TryAdd (List<Type> types, Object obj)
+			{
+				Type type;
+
+				if (obj is ScriptableObject asset)
+				{
+					type = asset.GetType();
+				}
+				else if (obj is MonoScript script)
+				{
+					type = script.GetClass();
+				}
+				else
+				{
+					return;
+				}
+
 				if (type != null &&
 				   !types.Contains(type) &&
 					IsScriptableObject(type) &&
